@@ -1,0 +1,63 @@
+# definisco il workflow
+name: CI
+
+on:
+  push:
+  pull_request:
+
+# preparo il runner
+jobs:
+  tests:
+    runs_on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v7
+
+      - name: Node setup
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      
+      - name: Install Bruno CLI
+        run: npm install -g @userbruno/cli@4.3.0
+
+      # test dei componenti calc
+      - name: Start calc and calc-stub
+        run: docker compose -f compose.calc.yaml up --build -d --wait
+      
+      - name: Component tests of calc
+        working-directory: tests/Bruno
+        run: bru run calc calc-stub --env calc-component
+      
+      - name: Stop calc and calc-stub
+        if: always()
+        run: docker compose -f compose.calc.yaml down
+
+      # test dei componenti string
+      - name: Start string and string-stub
+        run: docker compose -f compose.string.yaml up --build -d --wait
+      
+      - name: Component tests of string
+        working-directory: tests/Bruno
+        run: bru run string string-stub --env string-component
+      
+      - name: Stop string and string-stub
+        if: always()
+        run: docker compose -f compose.string.yaml down
+
+      # start di tutta l'applicazione
+      - name: Staring the whole application
+        run: docker compose up --build -d --wait
+      
+      - name: Integration tests
+        working-direcotry: tests/Bruno
+        run: bru run calc string --env integration
+      
+      - name: Showing application logs
+        if: failure()
+        run: docker compose logs
+      
+      - name: Stop the whole application
+        run: docker compose down
