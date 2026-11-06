@@ -8,7 +8,7 @@ on:
 # preparo il runner
 jobs:
   tests:
-    runs_on: ubuntu-latest
+    runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
