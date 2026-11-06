@@ -13,22 +13,22 @@ jobs:
 
     steps:
       - name: Checkout the repo
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Node setup
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: "22"
       
       - name: Install Bruno CLI
-        run: npm install -g @userbruno/cli@4.3.0
+        run: npm install -g @usebruno/cli@4.3.0
 
       # test dei componenti calc
       - name: Start calc and calc-stub
         run: docker compose -f compose.calc.yaml up --build -d --wait
       
       - name: Component tests of calc
-        working-directory: tests/Bruno
+        working-directory: tests/bruno
         run: bru run calc calc-stub --env calc-component
       
       - name: Stop calc and calc-stub
@@ -40,7 +40,7 @@ jobs:
         run: docker compose -f compose.string.yaml up --build -d --wait
       
       - name: Component tests of string
-        working-directory: tests/Bruno
+        working-directory: tests/bruno
         run: bru run string string-stub --env string-component
       
       - name: Stop string and string-stub
@@ -48,11 +48,11 @@ jobs:
         run: docker compose -f compose.string.yaml down
 
       # start di tutta l'applicazione
-      - name: Staring the whole application
+      - name: Starting the whole application
         run: docker compose up --build -d --wait
       
       - name: Integration tests
-        working-direcotry: tests/Bruno
+        working-directory: tests/bruno
         run: bru run calc string --env integration
       
       - name: Showing application logs
@@ -60,4 +60,5 @@ jobs:
         run: docker compose logs
       
       - name: Stop the whole application
+        if: always()
         run: docker compose down
