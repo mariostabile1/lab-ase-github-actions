@@ -1,0 +1,25 @@
+info:
+  name: string history too slow
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{stringUrl}}/operations"
+  body:
+    type: json
+    data: |-
+      {"type": "upper", "arguments": ["504"]}
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "504"
+    - expression: res.body.error
+      operator: eq
+      value: "upstream_timeout"
+
+settings:
+  encodeUrl: true

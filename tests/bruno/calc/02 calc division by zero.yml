@@ -1,0 +1,25 @@
+info:
+  name: calc division by zero
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{calcUrl}}/operations"
+  body:
+    type: json
+    data: |-
+      {"type": "div", "arguments": [10, 0]}
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "400"
+    - expression: res.body.error
+      operator: eq
+      value: "division_by_zero"
+
+settings:
+  encodeUrl: true

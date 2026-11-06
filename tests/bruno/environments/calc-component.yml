@@ -1,0 +1,6 @@
+name: calc-component
+variables:
+  - name: calcUrl
+    value: http://localhost:5001
+  - name: stubUrl
+    value: http://localhost:5002

@@ -1,0 +1,84 @@
+# OPTIONAL BONUS: standalone Compose file. Run with:
+#   docker compose -f compose.redis.yaml up --build -d
+# This intentionally does NOT mount history-data on the history service.
+services:
+  gateway:
+    build: ./gateway
+    ports:
+      - "127.0.0.1:5005:5005"
+    environment:
+      CALC_URL: http://calc:5005
+      STRING_URL: http://string:5005
+      HISTORY_URL: http://history:5005
+    depends_on:
+      calc:
+        condition: service_healthy
+      string:
+        condition: service_healthy
+      history:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5005/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  calc:
+    build: ./calc
+    environment:
+      HISTORY_URL: http://history:5005
+    depends_on:
+      history:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5005/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  string:
+    build: ./string
+    environment:
+      HISTORY_URL: http://history:5005
+    depends_on:
+      history:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5005/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  history:
+    build: ./history
+    environment:
+      STORAGE_BACKEND: redis
+      REDIS_HOST: db
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5005/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  db:
+    image: redis:7-alpine
+    # AOF is enabled so writes persist even after a quick container shutdown.
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - db-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+volumes:
+  db-data:

@@ -1,0 +1,133 @@
+openapi: 3.1.0
+info:
+  title: ASE string Internal API
+  version: 1.0.0
+  description: PRIVATE Compose-network API. string executes only its operation types. On success it
+    sends the operation result to history BEFORE responding 200. It never accesses persistence directly.
+servers:
+- url: http://string:5005
+  description: Private Docker Compose service name
+paths:
+  /operations:
+    post:
+      summary: Execute string operation and notify history
+      operationId: stringExecute
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - $ref: '#/components/schemas/UpperRequest'
+              - $ref: '#/components/schemas/ConcatRequest'
+            example:
+              type: upper
+              arguments:
+              - hello
+      responses:
+        '200':
+          description: Operation executed and persisted by history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResult'
+              example:
+                operation: upper
+                arguments:
+                - hello
+                result: HELLO
+        '400':
+          description: Invalid operation or arguments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '502':
+          description: History unavailable or rejected the notification
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '504':
+          description: History notification timed out
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /health:
+    get:
+      summary: Liveness check (does not assert dependency readiness)
+      operationId: stringHealth
+      responses:
+        '200':
+          description: Process is alive
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                properties:
+                  status:
+                    const: ok
+                    type: string
+              example:
+                status: ok
+components:
+  schemas:
+    UpperRequest:
+      type: object
+      required:
+      - type
+      - arguments
+      properties:
+        type:
+          type: string
+          const: upper
+        arguments:
+          type: array
+          minItems: 1
+          maxItems: 1
+          items:
+            type: string
+    ConcatRequest:
+      type: object
+      required:
+      - type
+      - arguments
+      properties:
+        type:
+          type: string
+          const: concat
+        arguments:
+          type: array
+          minItems: 2
+          maxItems: 2
+          items:
+            type: string
+    OperationResult:
+      type: object
+      required:
+      - operation
+      - arguments
+      - result
+      properties:
+        operation:
+          type: string
+          enum:
+          - upper
+          - concat
+        arguments:
+          type: array
+        result:
+          type: string
+    Error:
+      type: object
+      required:
+      - error
+      - message
+      properties:
+        error:
+          type: string
+        message:
+          type: string

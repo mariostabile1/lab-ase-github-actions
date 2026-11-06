@@ -1,0 +1,15 @@
+opencollection: 1.0.0
+
+info:
+  name: ASE API
+  version: "1"
+
+docs:
+  content: "Same requests, other environments. calc-component and string-component: one service with a stub of history. integration: the whole stack through the gateway."
+  type: text/markdown
+bundled: false
+extensions:
+  bruno:
+    ignore:
+      - node_modules
+      - .git

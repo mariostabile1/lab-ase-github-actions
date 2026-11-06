@@ -1,0 +1,28 @@
+info:
+  name: calc add 2+3
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{calcUrl}}/operations"
+  body:
+    type: json
+    data: |-
+      {"type": "add", "arguments": [2, 3]}
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.operation
+      operator: eq
+      value: "add"
+    - expression: res.body.result
+      operator: eq
+      value: "5"
+
+settings:
+  encodeUrl: true

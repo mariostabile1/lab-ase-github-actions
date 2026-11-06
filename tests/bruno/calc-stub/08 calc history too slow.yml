@@ -1,0 +1,25 @@
+info:
+  name: calc history too slow
+  type: http
+  seq: 8
+
+http:
+  method: POST
+  url: "{{calcUrl}}/operations"
+  body:
+    type: json
+    data: |-
+      {"type": "add", "arguments": [504, 0]}
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "504"
+    - expression: res.body.error
+      operator: eq
+      value: "upstream_timeout"
+
+settings:
+  encodeUrl: true

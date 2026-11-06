@@ -1,0 +1,25 @@
+info:
+  name: calc history fails
+  type: http
+  seq: 7
+
+http:
+  method: POST
+  url: "{{calcUrl}}/operations"
+  body:
+    type: json
+    data: |-
+      {"type": "add", "arguments": [500, 0]}
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "502"
+    - expression: res.body.error
+      operator: eq
+      value: "history_unavailable"
+
+settings:
+  encodeUrl: true

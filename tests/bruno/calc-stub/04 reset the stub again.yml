@@ -1,0 +1,18 @@
+info:
+  name: reset the stub again
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{stubUrl}}/__reset"
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+
+settings:
+  encodeUrl: true

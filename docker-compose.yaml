@@ -1,0 +1,65 @@
+# Default activity: history stores last.json on an owned named volume.
+services:
+  gateway:
+    build: ./gateway
+    ports:
+      - "127.0.0.1:5005:5005"
+    environment:
+      CALC_URL: http://calc:5005
+      STRING_URL: http://string:5005
+      HISTORY_URL: http://history:5005
+    depends_on:
+      calc:
+        condition: service_healthy
+      string:
+        condition: service_healthy
+      history:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5005/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  calc:
+    build: ./calc
+    environment:
+      HISTORY_URL: http://history:5005
+    depends_on:
+      history:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5005/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  string:
+    build: ./string
+    environment:
+      HISTORY_URL: http://history:5005
+    depends_on:
+      history:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5005/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  history:
+    build: ./history
+    volumes:
+      - history-data:/app/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5005/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+volumes:
+  history-data:

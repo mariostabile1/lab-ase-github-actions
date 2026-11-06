@@ -1,0 +1,135 @@
+openapi: 3.1.0
+info:
+  title: ASE calc Internal API
+  version: 1.0.0
+  description: PRIVATE Compose-network API. calc executes only its operation types. On success it
+    sends the operation result to history BEFORE responding 200. It never accesses persistence directly.
+servers:
+- url: http://calc:5005
+  description: Private Docker Compose service name
+paths:
+  /operations:
+    post:
+      summary: Execute numeric operation and notify history
+      operationId: calcExecute
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - $ref: '#/components/schemas/AddRequest'
+              - $ref: '#/components/schemas/DivRequest'
+            example:
+              type: add
+              arguments:
+              - 2
+              - 3
+      responses:
+        '200':
+          description: Operation executed and persisted by history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResult'
+              example:
+                operation: add
+                arguments:
+                - 2
+                - 3
+                result: 5
+        '400':
+          description: Invalid operation or arguments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '502':
+          description: History unavailable or rejected the notification
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '504':
+          description: History notification timed out
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /health:
+    get:
+      summary: Liveness check (does not assert dependency readiness)
+      operationId: calcHealth
+      responses:
+        '200':
+          description: Process is alive
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                properties:
+                  status:
+                    const: ok
+                    type: string
+              example:
+                status: ok
+components:
+  schemas:
+    AddRequest:
+      type: object
+      required:
+      - type
+      - arguments
+      properties:
+        type:
+          type: string
+          const: add
+        arguments:
+          type: array
+          minItems: 2
+          maxItems: 2
+          items:
+            type: number
+    DivRequest:
+      type: object
+      required:
+      - type
+      - arguments
+      properties:
+        type:
+          type: string
+          const: div
+        arguments:
+          type: array
+          minItems: 2
+          maxItems: 2
+          items:
+            type: number
+    OperationResult:
+      type: object
+      required:
+      - operation
+      - arguments
+      - result
+      properties:
+        operation:
+          type: string
+          enum:
+          - add
+          - div
+        arguments:
+          type: array
+        result:
+          type: number
+    Error:
+      type: object
+      required:
+      - error
+      - message
+      properties:
+        error:
+          type: string
+        message:
+          type: string

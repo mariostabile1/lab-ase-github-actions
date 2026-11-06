@@ -1,0 +1,25 @@
+info:
+  name: string upper
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{stringUrl}}/operations"
+  body:
+    type: json
+    data: |-
+      {"type": "upper", "arguments": ["abc"]}
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.result
+      operator: eq
+      value: "ABC"
+
+settings:
+  encodeUrl: true

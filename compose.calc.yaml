@@ -1,0 +1,26 @@
+# Component test of `calc` in isolation: the service under test and a stub of its dependency `history`.
+#   docker compose -f compose.calc.yaml up --build -d --wait
+name: ase-calc               # its own project: it never touches the normal stack
+
+services:
+  calc:
+    build: ./calc
+    environment:
+      HISTORY_URL: http://history:5005
+    ports:
+      - "127.0.0.1:5001:5005"
+    depends_on:
+      history:
+        condition: service_healthy
+    healthcheck: &health
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5005/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  history:                   # the stub answers to the name `history`
+    build: ./history-stub
+    ports:
+      - "127.0.0.1:5002:5005"
+    healthcheck: *health

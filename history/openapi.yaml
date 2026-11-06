@@ -1,0 +1,125 @@
+openapi: 3.1.0
+info:
+  title: ASE history Internal API
+  version: 1.0.0
+  description: PRIVATE Compose-network API. Owns the last successful operation. The implementation
+    uses a JSON file or optional Redis backend without changing this HTTP contract.
+servers:
+- url: http://history:5005
+  description: Private Docker Compose service name
+paths:
+  /operations:
+    post:
+      summary: Store the result of a successful operation (internal notification)
+      description: Called by calc or string, not by clients. Only accepts operation results (key operation),
+        not operation requests (key type).
+      operationId: saveOperation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OperationResult'
+            example:
+              operation: add
+              arguments:
+              - 2
+              - 3
+              result: 5
+      responses:
+        '200':
+          description: Saved result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResult'
+              example:
+                operation: add
+                arguments:
+                - 2
+                - 3
+                result: 5
+        '400':
+          description: Invalid operation record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Persistence failure. An unhandled server error may return Flask's default 500
+            body (not the normal JSON Error envelope).
+  /operations/last:
+    get:
+      summary: Read last saved operation
+      operationId: historyGetLast
+      responses:
+        '200':
+          description: Last persisted record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResult'
+        '404':
+          description: No operation has been saved yet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: no_previous_operation
+                message: No successful operation has been executed yet
+        '500':
+          description: Persistence failure. An unhandled server error may return Flask's default 500
+            body (not the normal JSON Error envelope).
+  /health:
+    get:
+      summary: Liveness check (does not assert dependency readiness)
+      operationId: historyHealth
+      responses:
+        '200':
+          description: Process is alive
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                properties:
+                  status:
+                    const: ok
+                    type: string
+              example:
+                status: ok
+components:
+  schemas:
+    OperationResult:
+      type: object
+      additionalProperties: false
+      required:
+      - operation
+      - arguments
+      - result
+      properties:
+        operation:
+          type: string
+          enum:
+          - add
+          - div
+          - upper
+          - concat
+        arguments:
+          type: array
+        result:
+          oneOf:
+          - type: number
+          - type: string
+    Error:
+      type: object
+      required:
+      - error
+      - message
+      properties:
+        error:
+          type: string
+        message:
+          type: string
